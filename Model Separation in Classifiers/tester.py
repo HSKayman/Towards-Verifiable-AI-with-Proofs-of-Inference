@@ -14,7 +14,7 @@ from scipy import stats
 import seaborn as sns
 from scipy.special import kl_div
 import os
-from model_structure import get_preprocessing_transforms,get_resnet_model,BCNN, train_model, evaluate_model
+from model_structure import get_preprocessing_transforms,get_resnet_model, train_model, evaluate_model
 
 # %%
 INPUT_SIZE = 224
@@ -30,18 +30,18 @@ THE_CLASS = 1 # 0 cat or squirrel, 1 dog
 # %%
 # Get transforms
 train_transform, val_transform = get_preprocessing_transforms(INPUT_SIZE)
-
-test_data_1_dir = 'data4model_1/test/'
-test_data_2_dir = 'data4model_2/test/'
-train_data_1_dir = 'data4model_1/train/'
-train_data_2_dir = 'data4model_2/train/'
+master_file_path = 'C:/Users/hskay/Dropbox/OneDrive-Backup/Documents/GitHub/ML_ZK/Experiment_4_RGB_PTR'
+test_data_1_dir = f'{master_file_path}/data4model_1/test/'
+test_data_2_dir = f'{master_file_path}/data4model_2/test/'
+train_data_1_dir = f'{master_file_path}/data4model_1/train/'
+train_data_2_dir = f'{master_file_path}/data4model_2/train/'
 
 # Load data set
 dataset_test_1 = datasets.ImageFolder(test_data_1_dir,transform=val_transform)
 dataset_train_1 = datasets.ImageFolder(train_data_1_dir,transform=val_transform)
 dataset_test_2 = datasets.ImageFolder(test_data_2_dir,transform=val_transform)
 dataset_train_2 = datasets.ImageFolder(train_data_2_dir,transform=val_transform)
-additional_set = datasets.ImageFolder('data4model_1/for_extra_test/',transform=val_transform)
+additional_set = datasets.ImageFolder(f'{master_file_path}/data4model_1/for_extra_test/',transform=val_transform)
 
 additional_loader = DataLoader(additional_set, shuffle=False, batch_size=BATCH_SIZE)
 test_loader_1 = DataLoader(dataset_test_1, shuffle=False, batch_size=BATCH_SIZE)
@@ -185,11 +185,11 @@ def compare_model_activations(model1_activations, model2_activations, selected_i
         original_shape = indices_info.get('original_shape', data1['output'].shape)
         
         # get inputs, weights, biases, and stored outputs
-        input1 = data1['input']
-        weights1 = data1['weight']
+        # 
+        input1 = data1['input']  # Input from model 1
+        input2 = data2['input']  # Input from model 2
+        weights1 = data1['weight']  # Using same weights (model 1)
         bias1 = data1.get('bias')
-        weights2 = data2['weight']
-        bias2 = data2.get('bias')
         stored_output1 = data1['output']
     
         layer_results = {
@@ -250,7 +250,19 @@ def compare_model_activations(model1_activations, model2_activations, selected_i
                         if 0 <= h_pos < input1.shape[2] and 0 <= w_pos < input1.shape[3]:
                             input_patch[:, i, j] = input1[0, :, h_pos, w_pos]
 
-                # Compute expected activation with model1 weights
+                # Extract input patch from model 2
+                input_patch2 = torch.zeros(input2.shape[1], kernel_size, kernel_size, device=input2.device)
+                
+                for i in range(kernel_size):
+                    for j in range(kernel_size):
+                        h_pos = in_h_start + i * dilation
+                        w_pos = in_w_start + j * dilation
+                        
+                        # If position is within bounds of input
+                        if 0 <= h_pos < input2.shape[2] and 0 <= w_pos < input2.shape[3]:
+                            input_patch2[:, i, j] = input2[0, :, h_pos, w_pos]
+                
+                # Compute activation with model1 input and model1 weights
                 if channel < weights1.shape[0]:
                     kernel1 = weights1[channel]
                     # Classic convolution calculation
@@ -263,12 +275,12 @@ def compare_model_activations(model1_activations, model2_activations, selected_i
                 else:
                     calculated_activation1 = 0
                 
-                # Compute activation using model2 weights with model1 input
-                if channel < weights2.shape[0]:
-                    kernel2 = weights2[channel]
-                    calculated_activation2 = (input_patch * kernel2).sum()
-                    if bias2 is not None:
-                        calculated_activation2 += bias2[channel]
+                # Compute activation using model2 input with same model1 weights
+                if channel < weights1.shape[0]:
+                    kernel1 = weights1[channel]
+                    calculated_activation2 = (input_patch2 * kernel1).sum()
+                    if bias1 is not None:
+                        calculated_activation2 += bias1[channel]
                     calculated_activation2 = max(0, calculated_activation2.item())  # ReLU
                 else:
                     calculated_activation2 = 0
@@ -276,8 +288,13 @@ def compare_model_activations(model1_activations, model2_activations, selected_i
                 neuron_data = {
                     'type': 'conv',
                     'position': {'channel': int(channel), 'height': int(h_idx), 'width': int(w_idx)},
-                    'input_patch': {
+                    'input_patch_model1': {
                         'data': input_patch.detach().cpu().numpy(),
+                        'coords': {'h_start': in_h_start, 'h_end': in_h_end, 
+                                  'w_start': in_w_start, 'w_end': in_w_end}
+                    },
+                    'input_patch_model2': {
+                        'data': input_patch2.detach().cpu().numpy(),
                         'coords': {'h_start': in_h_start, 'h_end': in_h_end, 
                                   'w_start': in_w_start, 'w_end': in_w_end}
                     }
@@ -294,34 +311,36 @@ def compare_model_activations(model1_activations, model2_activations, selected_i
                 stored_activation = flattened_output[0, idx].item()
                 
                 # unrolling input for dot product
-                flattened_input = input1.flatten(start_dim=1)
+                flattened_input1 = input1.flatten(start_dim=1)
+                flattened_input2 = input2.flatten(start_dim=1)
                 
                 # check if it is correct when i remove this
-                if flattened_input.shape[1] != weights1.shape[1]:
+                if flattened_input1.shape[1] != weights1.shape[1]:
                     continue
                 
-                # calculate model1 activation
-                calculated_activation1 = torch.matmul(flattened_input, weights1[idx])
+                # calculate model1 activation using input1 and weights1
+                calculated_activation1 = torch.matmul(flattened_input1, weights1[idx])
                 if bias1 is not None and idx < bias1.shape[0]:
                     calculated_activation1 += bias1[idx]
                 calculated_activation1 = max(0, calculated_activation1.item())  # ReLU
                 
-                # Calculate using model2 weights with model1 input
-                calculated_activation2 = torch.matmul(flattened_input, weights2[idx])
-                if bias2 is not None and idx < bias2.shape[0]:
-                    calculated_activation2 += bias2[idx]
+                # Calculate using model2 input with same model1 weights
+                calculated_activation2 = torch.matmul(flattened_input2, weights1[idx])
+                if bias1 is not None and idx < bias1.shape[0]:
+                    calculated_activation2 += bias1[idx]
                 calculated_activation2 = max(0, calculated_activation2.item())  # ReLU
                 
                 neuron_data = {
                     'type': 'linear',
                     'position': {'neuron': int(idx)},
-                    'input_values': flattened_input.detach().cpu().numpy()
+                    'input_values_model1': flattened_input1.detach().cpu().numpy(),
+                    'input_values_model2': flattened_input2.detach().cpu().numpy()
                 }
             
-            # Calculate verification error (how accurate our calculation is)
+            # Calculate verification error (how accurate our calculation is for model1's input)
             verification_error = abs(stored_activation - calculated_activation1)
             
-            # Calculate cross-model difference
+            # Calculate cross-input difference (same weights, different inputs)
             cross_model_difference = abs(calculated_activation1 - calculated_activation2)
             
             # Store comparison for this neuron

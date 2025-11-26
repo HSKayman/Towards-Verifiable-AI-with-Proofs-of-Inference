@@ -188,21 +188,22 @@ ROUND = 50
 N_INPUTS = 120
 results = pd.DataFrame(columns=[
     'input_id', 'round_id', 
-    'fc1_min_abs_diff', 'fc1_max_abs_diff', 'fc1_mean_abs_diff',
-    'fc2_min_abs_diff', 'fc2_max_abs_diff', 'fc2_mean_abs_diff',
-    'fc3_min_abs_diff', 'fc3_max_abs_diff', 'fc3_mean_abs_diff',
+    'fc1_min_abs_diff', 'fc1_max_abs_diff', 'fc1_mean_abs_diff','fc1_verification_error',
+    'fc2_min_abs_diff', 'fc2_max_abs_diff', 'fc2_mean_abs_diff','fc2_verification_error',
+    'fc3_min_abs_diff', 'fc3_max_abs_diff', 'fc3_mean_abs_diff','fc3_verification_error',
     'real_input', "pred_input"
 ])
+
+# Register hooks ONCE before the loops to avoid accumulation
+activations = {}
+hook1 = verified_model.fc1.register_forward_hook(get_activation('fc1', activations))
+hook2 = verified_model.fc2.register_forward_hook(get_activation('fc2', activations))
+hook3 = verified_model.fc3.register_forward_hook(get_activation('fc3', activations))
+
 for i in range(N_INPUTS):
     print(f"Input {i+1}")
     for j in range(ROUND):
         print(f"Round {j+1}")
-
-        # Registering hooks to capture activations
-        activations = {}
-        verified_model.fc1.register_forward_hook(get_activation('fc1', activations))
-        verified_model.fc2.register_forward_hook(get_activation('fc2', activations))
-        verified_model.fc3.register_forward_hook(get_activation('fc3', activations))
 
         calibration_data = X_train[i]
 
@@ -218,12 +219,6 @@ for i in range(N_INPUTS):
         # ADVERSARIAL INPUT GENERATION
         pred_inputs = crack_input(real_activations['fc3'], verified_model, learning_rate=0.005, iterations=10000)
 
-        # Registering hooks to capture activations
-        activations = {}
-        verified_model.fc1.register_forward_hook(get_activation('fc1', activations))
-        verified_model.fc2.register_forward_hook(get_activation('fc2', activations))
-        verified_model.fc3.register_forward_hook(get_activation('fc3', activations))
-
         calibration_data = pred_inputs
 
         # ACTIVATIONS that ADVERSARIAL INPUT GENERATED
@@ -234,26 +229,101 @@ for i in range(N_INPUTS):
 
         round_results = {'input_id': i+1, 'round_id': j+1}
         
+        # ===================================================================
+        # FORMULA-BASED VERIFICATION
+        # Calculate activations using formula: relu(A*W + b)
+        # ===================================================================
         # Compare and visualize the activations using absolute difference
-        for layer in real_activations.keys():
+        # Layer 1: Input -> FC1
+        W1 = verified_model.fc1.weight  # [64, 4]
+        b1 = verified_model.fc1.bias    # [64]
+        
+        # Calculate fc1 output for verified input
+        fc1_calc_real = F.relu(F.linear(X_train[i].unsqueeze(0), W1, b1))
+        # Calculate fc1 output for malicious input  
+        fc1_calc_pred = F.relu(F.linear(pred_inputs, W1, b1))
+        
+        # Verify hooked activation matches calculated
+        fc1_verification_error = torch.abs(real_activations['fc1'] - fc1_calc_real).mean().item()
+        
+        # Calculate difference between verified and malicious
+        fc1_formula_diff = torch.abs(fc1_calc_real - fc1_calc_pred)
+        
+        # Calculate mean absolute error between real and predicted activations
+        mean_abs_diff = fc1_formula_diff.mean().item()
+        max_abs_diff = fc1_formula_diff.max().item()
+        min_abs_diff = fc1_formula_diff.min().item()
 
-            # Calculate mean absolute error between real and predicted activations
-            abs_diff = torch.abs(real_activations[layer] - pred_activations[layer])
-            mean_abs_diff = abs_diff.mean().item()
-            max_abs_diff = abs_diff.max().item()
-            min_abs_diff = abs_diff.min().item()
+        # Store in results dictionary
+        round_results[f'{"fc1"}_min_abs_diff'] = min_abs_diff
+        round_results[f'{"fc1"}_max_abs_diff'] = max_abs_diff
+        round_results[f'{"fc1"}_mean_abs_diff'] = mean_abs_diff
+        round_results['fc1_verification_error'] = fc1_verification_error
+                
+         
+        # Layer 2: FC1 -> FC2
+        W2 = verified_model.fc2.weight  # [32, 64]
+        b2 = verified_model.fc2.bias    # [32]
 
-            # Store in results dictionary
-            round_results[f'{layer}_min_abs_diff'] = min_abs_diff
-            round_results[f'{layer}_max_abs_diff'] = max_abs_diff
-            round_results[f'{layer}_mean_abs_diff'] = mean_abs_diff
+        # Calculate fc2 output for verified input
+        fc2_calc_real = F.relu(F.linear(fc1_calc_real, W2, b2))
+        # Calculate fc2 output for malicious input
+        fc2_calc_pred = F.relu(F.linear(fc1_calc_pred, W2, b2))
+
+        # Verify hooked activation matches calculated
+        fc2_verification_error = torch.abs(real_activations['fc2'] - fc2_calc_real).mean().item()
+        
+        # Calculate difference between verified and malicious
+        fc2_formula_diff = torch.abs(fc2_calc_real - fc2_calc_pred)
+        
+        # Calculate mean absolute error between real and predicted activations
+        mean_abs_diff = fc2_formula_diff.mean().item()
+        max_abs_diff = fc2_formula_diff.max().item()
+        min_abs_diff = fc2_formula_diff.min().item()
+
+        # Store in results dictionary
+        round_results[f'{"fc2"}_min_abs_diff'] = min_abs_diff
+        round_results[f'{"fc2"}_max_abs_diff'] = max_abs_diff
+        round_results[f'{"fc2"}_mean_abs_diff'] = mean_abs_diff
+        round_results['fc2_verification_error'] = fc2_verification_error
+
+        # Layer 3: FC2 -> FC3
+        W3 = verified_model.fc3.weight  # [3, 32]
+        b3 = verified_model.fc3.bias    # [3]
+
+        # Calculate fc3 output for verified input
+        fc3_calc_real = F.linear(fc2_calc_real, W3, b3)
+        # Calculate fc3 output for malicious input
+        fc3_calc_pred = F.linear(fc2_calc_pred, W3, b3)
+
+        # Verify hooked activation matches calculated
+        fc3_verification_error = torch.abs(real_activations['fc3'] - fc3_calc_real).mean().item()
+        
+        # Calculate difference between verified and malicious
+        fc3_formula_diff = torch.abs(fc3_calc_real - fc3_calc_pred)
+
+        # Calculate mean absolute error between real and predicted activations
+        mean_abs_diff = fc3_formula_diff.mean().item()
+        max_abs_diff = fc3_formula_diff.max().item()
+        min_abs_diff = fc3_formula_diff.min().item()
+
+        # Store in results dictionary
+        round_results[f'{"fc3"}_min_abs_diff'] = min_abs_diff
+        round_results[f'{"fc3"}_max_abs_diff'] = max_abs_diff
+        round_results[f'{"fc3"}_mean_abs_diff'] = mean_abs_diff
+        round_results['fc3_verification_error'] = fc3_verification_error
 
         # Append results to DataFrame
         round_results['real_input'] = X_train[i].cpu().flatten().numpy().tolist()
         round_results['pred_input'] = pred_inputs.cpu().flatten().numpy().tolist()
         results = pd.concat([results, pd.DataFrame([round_results])], ignore_index=True)
-        
+
+# Clean up hooks
+hook1.remove()
+hook2.remove()
+hook3.remove()
             
-results.to_csv('activation_diff_results2.csv', index=False)
+results.to_csv('activation_diff_results_formula.csv', index=False)
+print("\n✓ Saved results to activation_diff_results_formula.csv")
 
 

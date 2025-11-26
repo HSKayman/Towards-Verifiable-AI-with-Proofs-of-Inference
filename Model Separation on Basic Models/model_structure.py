@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torchvision import transforms
-import torchvision.models as models
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, f1_score
@@ -55,26 +54,6 @@ class BCNN(nn.Module):
         # x = torch.squeeze(x)
         x = self.classifier(x)
         return x
-
-
-# ResNet Architecture
-def get_resnet_model(class_count=2):
-    model = models.resnet18(pretrained=True)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 2)
-    return model
-
-# SqueezeNet Architecture
-def get_squ_model(class_count=2):
-    model = models.squeezenet1_1(pretrained=True)
-    model.classifier = torch.nn.Sequential(
-        torch.nn.Dropout(p=0.5),
-        torch.nn.Conv2d(512, class_count, kernel_size=1),  
-        torch.nn.ReLU(inplace=True),
-        torch.nn.AdaptiveAvgPool2d((1, 1))
-    )
-
-    return model
 
 # Data Preprocessing
 def get_preprocessing_transforms(input_size=224):
