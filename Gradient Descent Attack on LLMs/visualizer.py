@@ -1,3 +1,5 @@
+"""Plot failed LLM reconstruction tests from hack_summary.csv (error distributions, layers)."""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

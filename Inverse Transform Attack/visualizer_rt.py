@@ -1,3 +1,5 @@
+"""Visualize inverse-transform attack results and activation separations."""
+
 # %%
 import pandas as pd
 import numpy as np

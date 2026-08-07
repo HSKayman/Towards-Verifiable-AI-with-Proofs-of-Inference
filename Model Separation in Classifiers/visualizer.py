@@ -1,3 +1,5 @@
+"""Plots for classifier model-separation metrics and experiment results."""
+
 # %%
 import torch
 import torch.nn as nn

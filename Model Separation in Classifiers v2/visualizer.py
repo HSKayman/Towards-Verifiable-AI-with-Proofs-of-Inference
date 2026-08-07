@@ -1,3 +1,5 @@
+"""v2 visualization of classifier model-separation results."""
+
 # %%
 import torch
 import torch.nn as nn

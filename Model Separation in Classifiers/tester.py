@@ -1,3 +1,5 @@
+"""Evaluate trained classifiers and measure inter-model activation/output separation."""
+
 # %%
 import torch
 import torch.nn as nn

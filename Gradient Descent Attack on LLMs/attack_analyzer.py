@@ -1,3 +1,4 @@
+"""Chunked analyzer for LLM input-reconstruction attack error CSVs (layer/component stats)."""
 
 import numpy as np
 import pandas as pd

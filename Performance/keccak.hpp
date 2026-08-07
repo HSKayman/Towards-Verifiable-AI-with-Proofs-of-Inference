@@ -1,6 +1,7 @@
 // Copyright 2024 OKX Group
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
+// KeccakHasher API (CPU/GPU hash_one/hash_two) for ZK Merkle trees.
 
 #ifndef __ZEKNOX_KECCAK_HPP__
 #define __ZEKNOX_KECCAK_HPP__

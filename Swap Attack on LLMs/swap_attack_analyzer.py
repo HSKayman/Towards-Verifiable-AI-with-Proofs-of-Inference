@@ -1,3 +1,4 @@
+"""Analyze swap-attack experiment CSVs (layer/component error aggregation)."""
 
 import numpy as np
 import pandas as pd

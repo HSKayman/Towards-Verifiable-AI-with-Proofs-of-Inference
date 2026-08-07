@@ -1,3 +1,5 @@
+"""Compare original vs reconstructed LLM runs and summarize pass/fail into hack_summary.csv."""
+
 import pandas as pd
 import numpy as np
 from tqdm import tqdm

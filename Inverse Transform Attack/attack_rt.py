@@ -1,3 +1,5 @@
+"""Inverse-transform style input cracking attack on a small ANN (Iris demo)."""
+
 # %%
 import torch
 import torch.nn as nn

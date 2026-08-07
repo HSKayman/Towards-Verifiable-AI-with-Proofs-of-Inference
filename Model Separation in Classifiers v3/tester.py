@@ -1,3 +1,5 @@
+"""v3 evaluation of separation between trained classifier models."""
+
 # %%
 import torch
 import torch.nn as nn

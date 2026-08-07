@@ -1,3 +1,5 @@
+"""CNN/classifier architecture and preprocessing helpers for model-separation experiments."""
+
 import torch
 import torch.nn as nn
 from torchvision import transforms

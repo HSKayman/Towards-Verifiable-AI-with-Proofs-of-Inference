@@ -1,3 +1,5 @@
+"""v2 tester measuring separation between independently trained classifiers."""
+
 # %%
 import torch
 import torch.nn as nn

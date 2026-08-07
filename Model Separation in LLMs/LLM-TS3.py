@@ -1,3 +1,5 @@
+"""LLM model-separation experiment runner (TS3) comparing independently trained/fine-tuned models."""
+
 # %%
 import torch
 import torch.nn.functional as F

@@ -1,3 +1,5 @@
+/* GPU↔CPU binary save/load helpers for proof-system tensors. */
+
 #include "ioutils.cuh"
 
 void savebin(const string& filename, const void* gpudata, uint size)

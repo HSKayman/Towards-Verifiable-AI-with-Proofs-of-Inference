@@ -1,3 +1,4 @@
+"""Visualize LLM model-separation metrics and comparisons."""
 
 import numpy as np
 import pandas as pd

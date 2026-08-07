@@ -2,6 +2,7 @@
 // Copyright 2024 OKX Group
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
+// Generic field exponentiation helpers (pow_byref) for CUDA/HIP and host.
 
 #ifndef __SPPARK_FF_POW_HPP__
 #define __SPPARK_FF_POW_HPP__

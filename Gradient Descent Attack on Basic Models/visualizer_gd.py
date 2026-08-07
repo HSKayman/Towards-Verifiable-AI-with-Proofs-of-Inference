@@ -1,3 +1,5 @@
+"""Plot activation-difference stats from GD reconstruction attacks on basic models."""
+
 # %%
 import pandas as pd
 import numpy as np

@@ -1,3 +1,5 @@
+"""Swap attack on LLMs: interchange activations/weights to probe proof-of-inference integrity."""
+
 # %%
 import torch
 import torch.nn as nn

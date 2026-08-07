@@ -1,3 +1,5 @@
+"""Compare weight/activation statistics across separated LLM model instances."""
+
 # %%
 import torch
 import torch.nn.functional as F

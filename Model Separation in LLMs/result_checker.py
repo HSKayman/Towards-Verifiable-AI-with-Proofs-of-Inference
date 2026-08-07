@@ -1,3 +1,5 @@
+"""Validate/summarize LLM model-separation experiment result files."""
+
 import pandas as pd
 import numpy as np
 from tqdm import tqdm

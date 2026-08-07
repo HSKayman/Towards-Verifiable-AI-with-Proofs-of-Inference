@@ -1,3 +1,4 @@
+"""Analyze LLM model-separation experiment datasets and intermediate outputs."""
 
 import numpy as np
 import pandas as pd

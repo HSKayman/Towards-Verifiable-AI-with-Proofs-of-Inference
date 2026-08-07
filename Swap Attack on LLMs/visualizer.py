@@ -1,3 +1,5 @@
+"""Plot swap-attack summary results (failed cases, error distributions)."""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,3 +1,5 @@
+"""v2 classifier architectures and transforms for model-separation studies."""
+
 import torch
 import torch.nn as nn
 from torchvision import transforms

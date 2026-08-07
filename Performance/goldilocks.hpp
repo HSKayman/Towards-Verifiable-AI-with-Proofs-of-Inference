@@ -2,6 +2,7 @@
 // Copyright 2024 OKX Group
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
+// Host-side Goldilocks prime-field type wrapping gl64 CUDA arithmetic.
 
 #ifndef __CRYPTO__FF__GL64__HPP__
 #define __CRYPTO__FF__GL64__HPP__

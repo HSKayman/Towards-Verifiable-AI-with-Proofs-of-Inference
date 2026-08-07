@@ -1,3 +1,5 @@
+"""Gradient-based input reconstruction attack on Llama-2 with activation capture/hooks."""
+
 # %%
 import torch
 import torch.nn as nn

@@ -1,3 +1,5 @@
+/* Finite-field tensor utilities (random vectors, I/O) over BLS12-381 Fr elements. */
+
 #include "fr-tensor.cuh"
 #include "ioutils.cuh"
 

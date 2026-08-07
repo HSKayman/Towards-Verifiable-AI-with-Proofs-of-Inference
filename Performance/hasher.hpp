@@ -1,6 +1,7 @@
 // Copyright 2024 OKX Group
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
+// Abstract Hasher base and hash-output size constants for ZK commitment hashing.
 
 #ifndef __ZEKNOX_HASHER_HPP__
 #define __ZEKNOX_HASHER_HPP__

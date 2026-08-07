@@ -1,3 +1,5 @@
+/* CUDA/OpenCL helpers for BLS12-381 field/scalar arithmetic used in ZK proofs. */
+
 #include "bls12-381.cuh"
 
 CONSTANT blstrs__scalar__Scalar blstrs__scalar__Scalar_ONE = { { 4294967294, 1, 215042, 1485092858, 3971764213, 2576109551, 2898593135, 405057881 } }; // in mont

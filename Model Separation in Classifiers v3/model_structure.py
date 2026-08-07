@@ -1,3 +1,5 @@
+"""v3 classifier model definitions for model-separation experiments."""
+
 import torch
 import torch.nn as nn
 from torchvision import transforms

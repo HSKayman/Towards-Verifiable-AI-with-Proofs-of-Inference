@@ -1,3 +1,5 @@
+"""Check swap-attack outcomes and produce pass/fail summary tables."""
+
 import pandas as pd
 import numpy as np
 from tqdm import tqdm

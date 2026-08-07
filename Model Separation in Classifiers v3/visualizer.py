@@ -1,3 +1,5 @@
+"""v3 plots for classifier model-separation analysis."""
+
 # %%
 import torch
 import torch.nn as nn

@@ -1,3 +1,5 @@
+"""Gradient-descent input reconstruction attack against a small ANN on Iris/tabular data."""
+
 # %%
 import torch
 import torch.nn as nn
